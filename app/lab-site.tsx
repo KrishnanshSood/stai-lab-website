@@ -100,11 +100,12 @@ export function LabSite() {
               <h1>{data.home.title}</h1>
               <p className="lead">{data.home.lead}</p>
               <p>{data.home.note}</p>
+              {data.news.length > 0 && <section className="home-news" aria-labelledby="home-news-title">
+                <div className="news-heading"><h2 id="home-news-title">Latest news & events</h2><a href="#news">All news <span aria-hidden="true">↗</span></a></div>
+                <NewsRow item={data.news[0]} featured compact />
+              </section>}
               <SectionTitle>Research lines</SectionTitle>
               <div>{data.thrusts.map((thrust) => <article className="list-card" key={thrust.title}><h3><a href="#research">{thrust.title}</a></h3><p>{thrust.line}</p></article>)}</div>
-              <SectionTitle>News</SectionTitle>
-              <div>{data.news.slice(0, 2).map((item) => <NewsRow key={`${item.date}-${item.title}`} item={item} />)}</div>
-              <a className="after-list-link" href="#news">All news</a>
             </section>
           )}
 
@@ -178,7 +179,27 @@ export function LabSite() {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) { return <h2 className="section-title">{children}</h2>; }
-function NewsRow({ item }: { item: NewsItem }) { return <article className="news-row"><time>{item.date}</time><div><h3>{item.title}</h3><p>{item.body}</p></div></article>; }
+function NewsRow({ item, featured = false, compact = false }: { item: NewsItem; featured?: boolean; compact?: boolean }) {
+  const paragraphs = item.body.split(/\n\s*\n/).filter(Boolean);
+  const summary = item.summary ?? (item.body.length > 280 ? `${item.body.slice(0, 260).replace(/\s+\S*$/, "")}…` : item.body);
+  const hasDetails = Boolean(item.sections?.length || item.poster || summary !== item.body);
+  return <article className={`news-card${featured ? " news-featured" : ""}`}>
+    <div className="news-card-content">
+      <div className="news-eyebrow"><time>{item.date}</time>{featured && <span>In focus</span>}</div>
+      <h3>{item.title}</h3>
+      {item.highlights?.length ? <ul className="news-highlights" aria-label="Event information">{item.highlights.map((text) => <li key={text}>{text}</li>)}</ul> : null}
+      <p className="news-summary">{summary}</p>
+      {compact ? <a className="news-cta" href="#news">Explore the event <span aria-hidden="true">→</span></a> : hasDetails && <details className="news-details">
+        <summary><span className="details-closed">View full details</span><span className="details-open">Hide details</span><span className="details-symbol" aria-hidden="true">+</span></summary>
+        <div className="news-detail-body">
+          {item.sections?.length ? item.sections.map((section) => <section className="event-section" key={section.title}><h4>{section.title}</h4><ul>{section.items.map((text) => <li key={text}>{text}</li>)}</ul></section>) : paragraphs.map((text, index) => <p key={index}>{text}</p>)}
+          {item.poster && <a className="poster-link" href={item.poster.href} target="_blank" rel="noreferrer">View full-size poster (PDF) <span aria-hidden="true">↗</span></a>}
+        </div>
+      </details>}
+    </div>
+    {item.poster && <a className="news-poster" href={item.poster.href} target="_blank" rel="noreferrer" aria-label="Open inauguration poster PDF in a new tab"><Image src={item.poster.src} alt={item.poster.alt} width={1000} height={1105} sizes="(max-width: 600px) 180px, 220px" /></a>}
+  </article>;
+}
 function ImageSlot({ slot, portrait = false }: { slot?: { label: string; src?: string }; portrait?: boolean }) {
   if (!slot) return null;
   return <div className={portrait ? "image-wrap portrait" : "image-wrap"}>{slot.src ? <Image src={slot.src} alt={slot.label} width={portrait ? 400 : 800} height={500} unoptimized /> : <div className="image-placeholder" aria-label={`${slot.label} placeholder`} />}{!slot.src && <small>{slot.label} · image coming soon</small>}</div>;

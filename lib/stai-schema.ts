@@ -20,7 +20,13 @@ export const siteDataSchema = z.object({
     network: z.array(z.object({ org: z.string(), meta: z.string(), href: z.string().url().refine((value) => /^https?:/i.test(value), "Use an HTTP or HTTPS link"), note: z.string() })),
   }),
   team: z.object({ studentsNotice: z.string() }),
-  news: z.array(z.object({ date: z.string(), title: z.string(), body: z.string() })),
+  news: z.array(z.object({
+    date: z.string(), title: z.string(), body: z.string(),
+    summary: z.string().optional(),
+    highlights: z.array(z.string()).optional(),
+    sections: z.array(z.object({ title: z.string(), items: z.array(z.string()) })).optional(),
+    poster: z.object({ src: z.string().regex(/^\/events\/[a-zA-Z0-9._-]+$/), href: z.string().regex(/^\/events\/[a-zA-Z0-9._-]+$/), alt: z.string() }).optional(),
+  })),
   contact: z.object({ address: z.array(z.string()), directions: z.string(), photoSlot: imageSlot }),
 });
 
